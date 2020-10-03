@@ -155,6 +155,10 @@ func (*AdminService) Initialize(e echo.Context) error {
 		"TRUNCATE `notifications`",
 		"TRUNCATE `push_subscriptions`",
 		"TRUNCATE `contest_config`",
+		"TRUNCATE `best_scores`",
+		"TRUNCATE `best_scores_frozen`",
+		"TRUNCATE `latest_scores`",
+		"TRUNCATE `latest_scores_frozen`",
 	}
 	for _, query := range queries {
 		_, err := db.Exec(query)

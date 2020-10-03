@@ -238,7 +238,11 @@ func (b *benchmarkReportService) saveAsFinished(tx sqlx.Execer, job *xsuportal.B
 		return fmt.Errorf("update benchmark job status: %w", err)
 	}
 
-    currentScore := int64(result.ScoreBreakdown.Raw) - int64(result.ScoreBreakdown.Deduction)
+	var currentScore sql.NullInt32
+	if result.ScoreBreakdown != nil {
+		currentScore.Valid = true
+		currentScore.Int32 = int32(result.ScoreBreakdown.Raw) - int32(result.ScoreBreakdown.Deduction)
+	}
     var maxScore int64
     var finishCount int64
     var finishCountFrozen int64

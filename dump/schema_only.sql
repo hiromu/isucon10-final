@@ -52,7 +52,7 @@ DROP TABLE IF EXISTS `latest_scores`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `latest_scores` (
   `team_id` bigint NOT NULL,
-  `score` int NOT NULL,
+  `score` int DEFAULT NULL,
   `started_at` datetime(6) NOT NULL,
   `finished_at` datetime(6) NOT NULL,
   `finish_count` int NOT NULL,
@@ -69,7 +69,7 @@ DROP TABLE IF EXISTS `latest_scores_frozen`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `latest_scores_frozen` (
   `team_id` bigint NOT NULL,
-  `score` int NOT NULL,
+  `score` int DEFAULT NULL,
   `started_at` datetime(6) NOT NULL,
   `finished_at` datetime(6) NOT NULL,
   `finish_count` int NOT NULL,
