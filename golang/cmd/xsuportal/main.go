@@ -275,10 +275,10 @@ func (*AdminService) GetClarification(e echo.Context) error {
 func (*AdminService) RespondClarification(e echo.Context) error {
 	contestant, err := getCurrentContestant(e, db, false)
 	if err != nil {
-		return wrapError("check session", fmt.Errorf("current contestant: %w", err))
+		return fmt.Errorf("current contestant: %w", err)
 	}
 	if contestant == nil {
-		return wrapError("check session", halt(e, http.StatusUnauthorized, "ログインが必要です", nil))
+		return halt(e, http.StatusUnauthorized, "ログインが必要です", nil)
 	}
 	id, err := strconv.Atoi(e.Param("id"))
 	if err != nil {
