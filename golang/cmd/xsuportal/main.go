@@ -1010,7 +1010,7 @@ func (*RegistrationService) JoinTeam(e echo.Context) error {
 
 	_, err = tx.Exec(
 		"UPDATE `teams` SET student = ? WHERE `id` = ? LIMIT 1",
-		req.IsStudent,
+		req.IsStudent && team.Student.Bool,
 		req.TeamId,
 	)
 	if err != nil {
