@@ -20,6 +20,9 @@ import (
 	"github.com/isucon/isucon10-final/webapp/golang/proto/xsuportal/resources"
 	"github.com/isucon/isucon10-final/webapp/golang/proto/xsuportal/services/bench"
 	"github.com/isucon/isucon10-final/webapp/golang/util"
+
+	"net/http"
+	_ "net/http/pprof"
 )
 
 var db *sqlx.DB
@@ -269,6 +272,10 @@ func pollBenchmarkJob(db sqlx.Queryer) (*xsuportal.BenchmarkJob, error) {
 }
 
 func main() {
+	go func() {
+		log.Println(http.ListenAndServe(":6060", nil))
+	}()
+
 	port := util.GetEnv("PORT", "50051")
 	address := ":" + port
 

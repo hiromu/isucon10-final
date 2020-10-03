@@ -33,6 +33,8 @@ import (
 	contestantpb "github.com/isucon/isucon10-final/webapp/golang/proto/xsuportal/services/contestant"
 	registrationpb "github.com/isucon/isucon10-final/webapp/golang/proto/xsuportal/services/registration"
 	"github.com/isucon/isucon10-final/webapp/golang/util"
+
+	echopprof "github.com/hiko1129/echo-pprof"
 )
 
 const (
@@ -118,6 +120,7 @@ func main() {
 	srv.POST("/api/login", contestant.Login)
 	srv.POST("/api/logout", contestant.Logout)
 
+	echopprof.Wrap(srv)
 	srv.Logger.Error(srv.StartServer(srv.Server))
 }
 
