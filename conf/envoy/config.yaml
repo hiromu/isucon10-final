@@ -66,7 +66,7 @@ static_resources:
                     typed_config:
                       "@type": type.googleapis.com/envoy.extensions.access_loggers.file.v3.FileAccessLog
                       path: /var/log/envoy/access.log
-                      format: '%DOWNSTREAM_DIRECT_REMOTE_ADDRESS_WITHOUT_PORT% - - [%START_TIME%] "%REQ(:METHOD)% %REQ(X-ENVOY-ORIGINAL-PATH?:PATH)% %PROTOCOL%" %RESPONSE_CODE% %BYTES_SENT% "%REQ(REFERER)%" "%REQ(USER-AGENT)%" %DURATION%'
+                      format: '%DOWNSTREAM_DIRECT_REMOTE_ADDRESS_WITHOUT_PORT% - - [%START_TIME%] "%REQ(:METHOD)% %REQ(X-ENVOY-ORIGINAL-PATH?:PATH)% %PROTOCOL%" %RESPONSE_CODE% %BYTES_SENT% "%REQ(REFERER)%" "%REQ(USER-AGENT)%" %DURATION%\n'
           transport_socket:
             name: envoy.transport_sockets.tls
             typed_config:
