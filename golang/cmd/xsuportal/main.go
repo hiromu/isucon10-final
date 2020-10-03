@@ -369,6 +369,7 @@ func (*CommonService) GetCurrentSession(e echo.Context) error {
 		return fmt.Errorf("get current team: %w", err)
 	}
 	if currentTeam != nil {
+		currentTeam.Student = false
 		res.Team, err = makeTeamPB(db, currentTeam, true, true)
 		if err != nil {
 			return fmt.Errorf("make team: %w", err)
