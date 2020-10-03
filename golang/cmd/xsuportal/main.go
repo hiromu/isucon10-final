@@ -1448,15 +1448,15 @@ func makeLeaderboardPB(e echo.Context, teamID int64) (*resourcespb.Leaderboard, 
 		"  `teams`.`withdrawn` AS `withdrawn`,\n" +
 		"  `teams`.`student` AS `student`,\n" +
         "  best_scores.score AS `best_score`, best_scores.started_at AS `best_score_started_at`, best_scores.finished_at AS `best_score_marked_at`,\n" +
-        "  latest_scores.score AS `latest_scores`, latest_scores.started_at AS `latest_score_started_at`, latest_scores.finished_at AS `latest_score_marked_at`, latest_scores.finish_count AS `finish_count`\n" +
+        "  latest_scores.score AS `latest_score`, latest_scores.started_at AS `latest_score_started_at`, latest_scores.finished_at AS `latest_score_marked_at`, latest_scores.finish_count AS `finish_count`\n" +
 		"FROM\n" +
 		"  `teams`\n" +
 		"  -- latest scores\n" +
 		"  LEFT JOIN (\n" +
-        "SELECT team_id, score, started_at, finished_at, finish_count FROM latest_scores WHER team_id = ? OR (team_id != ? AND ? = TRUE) UNION SELECT team_id, score, started_at, finished_at, finish_count FROM latest_scores_frozen WHERE team_id != ? AND ? = FALSE" +
+        "SELECT team_id, score, started_at, finished_at, finish_count FROM latest_scores WHERE team_id = ? OR (team_id != ? AND ? = TRUE) UNION SELECT team_id, score, started_at, finished_at, finish_count FROM latest_scores_frozen WHERE team_id != ? AND ? = FALSE" +
         ") `latest_scores` ON latest_scores.team_id = teams.id\n" +
         "  LEFT JOIN (\n" +
-        "SELECT team_id, score, started_at, finished_at FROM best_scores WHERE team_id = ? OR (team_id != ? AND ? = TRUE) UNION SELECT team_id, scores, started_at, finished_at FROM best_scores_frozen WHERE team_id != ? AND ? = FALSE" +
+        "SELECT team_id, score, started_at, finished_at FROM best_scores WHERE team_id = ? OR (team_id != ? AND ? = TRUE) UNION SELECT team_id, score, started_at, finished_at FROM best_scores_frozen WHERE team_id != ? AND ? = FALSE" +
         ") `best_scores` ON best_scores.team_id = teams.id\n" +
 		"ORDER BY\n" +
 		"  `latest_score` DESC,\n" +

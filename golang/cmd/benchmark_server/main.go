@@ -87,7 +87,7 @@ func (b *benchmarkQueueService) ReceiveBenchmarkJob(ctx context.Context, req *be
 			}
 
 			if contestStartsAt.IsZero() || contestFrozenAt.IsZero() {
-				rows, err := tx.Queryx("SELECT `contest_starts_at` FROM `contest_config` LIMIT 1")
+				rows, err := tx.Queryx("SELECT `contest_starts_at`, `contest_freezes_at` FROM `contest_config` LIMIT 1")
 				if err != nil {
 					return false, fmt.Errorf("get contest starts at: %w", err)
 				}
@@ -249,43 +249,43 @@ func (b *benchmarkReportService) saveAsFinished(tx sqlx.Execer, job *xsuportal.B
 
 	_, err = db.Exec(
         "INSERT INTO `latest_scores` VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE `score` = ?, `started_at` = ?, `finished_at` = ?, `finish_count` = ?",
-        job.TeamID, currentScore, job.StartedAt, job.FinishedAt, finishCount,
-        currentScore, job.StartedAt, job.FinishedAt, finishCount,
+        job.TeamID, currentScore, job.StartedAt, markedAt, finishCount,
+        currentScore, job.StartedAt, markedAt, finishCount,
     )
 	if err != nil {
-		return fmt.Errorf("update benchmark job status: %w", err)
+		return fmt.Errorf("update benchmark job status a: %w", err)
 	}
 
-    if contestFrozenAt.After(job.FinishedAt.Time) {
+    if contestFrozenAt.After(markedAt) {
 	    _, err = db.Exec(
             "INSERT INTO `latest_scores_frozen` VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE `score` = ?, `started_at` = ?, `finished_at` = ?, `finish_count` = ?",
-            job.TeamID, currentScore, job.StartedAt, job.FinishedAt, finishCount,
-            currentScore, job.StartedAt, job.FinishedAt, finishCount,
+            job.TeamID, currentScore, job.StartedAt, markedAt, finishCount,
+            currentScore, job.StartedAt, markedAt, finishCount,
         )
     }
 	if err != nil {
-		return fmt.Errorf("update benchmark job status: %w", err)
+		return fmt.Errorf("update benchmark job status b: %w", err)
 	}
 
-    if currentScore == maxScore {
+    if currentScore > maxScore {
         _, err = db.Exec(
             "INSERT INTO `best_scores` VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE `score` = ?, `started_at` = ?, `finished_at` = ?",
-            job.TeamID, maxScore, job.StartedAt, job.FinishedAt,
-            maxScore, job.StartedAt, job.FinishedAt,
+            job.TeamID, currentScore, job.StartedAt, markedAt,
+            maxScore, job.StartedAt, markedAt,
         )
         if err != nil {
-            return fmt.Errorf("update benchmark job status: %w", err)
+            return fmt.Errorf("update benchmark job status c: %w", err)
         }
 
-        if contestFrozenAt.After(job.FinishedAt.Time) {
+        if contestFrozenAt.After(markedAt) {
             _, err = db.Exec(
                 "INSERT INTO `best_scores_frozen` VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE `score` = ?, `started_at` = ?, `finished_at` = ?",
-                job.TeamID, maxScore, job.StartedAt, job.FinishedAt,
-                maxScore, job.StartedAt, job.FinishedAt,
+                job.TeamID, currentScore, job.StartedAt, markedAt,
+                maxScore, job.StartedAt, markedAt,
             )
         }
         if err != nil {
-            return fmt.Errorf("update benchmark job status: %w", err)
+            return fmt.Errorf("update benchmark job status d: %w", err)
         }
     }
 

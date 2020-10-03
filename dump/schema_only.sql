@@ -52,11 +52,11 @@ DROP TABLE IF EXISTS `latest_scores`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `latest_scores` (
   `team_id` bigint NOT NULL,
-  `score` int DEFAULT NOT NULL,
-  `started_at` datetime(6) DEFAULT NOT NULL,
-  `finished_at` datetime(6) DEFAULT NOT NULL,
-  `finish_count` int DEFAULT NOT NULL,
-  PRIMARY KEY (`team_id`),
+  `score` int NOT NULL,
+  `started_at` datetime(6) NOT NULL,
+  `finished_at` datetime(6) NOT NULL,
+  `finish_count` int NOT NULL,
+  PRIMARY KEY (`team_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -69,11 +69,11 @@ DROP TABLE IF EXISTS `latest_scores_frozen`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `latest_scores_frozen` (
   `team_id` bigint NOT NULL,
-  `score` int DEFAULT NOT NULL,
-  `started_at` datetime(6) DEFAULT NOT NULL,
-  `finished_at` datetime(6) DEFAULT NOT NULL,
-  `finish_count` int DEFAULT NOT NULL,
-  PRIMARY KEY (`team_id`),
+  `score` int NOT NULL,
+  `started_at` datetime(6) NOT NULL,
+  `finished_at` datetime(6) NOT NULL,
+  `finish_count` int NOT NULL,
+  PRIMARY KEY (`team_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -86,10 +86,26 @@ DROP TABLE IF EXISTS `best_scores`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `best_scores` (
   `team_id` bigint NOT NULL,
-  `score` int DEFAULT NOT NULL,
-  `started_at` datetime(6) DEFAULT NOT NULL,
-  `finished_at` datetime(6) DEFAULT NOT NULL,
-  PRIMARY KEY (`team_id`),
+  `score` int NOT NULL,
+  `started_at` datetime(6) NOT NULL,
+  `finished_at` datetime(6) NOT NULL,
+  PRIMARY KEY (`team_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `best_scores_frozen`
+--
+
+DROP TABLE IF EXISTS `best_scores_frozen`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `best_scores_frozen` (
+  `team_id` bigint NOT NULL,
+  `score` int NOT NULL,
+  `started_at` datetime(6) NOT NULL,
+  `finished_at` datetime(6) NOT NULL,
+  PRIMARY KEY (`team_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
