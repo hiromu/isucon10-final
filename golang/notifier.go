@@ -3,7 +3,9 @@ package xsuportal
 import (
 	"crypto/elliptic"
 	"crypto/x509"
+	"database/sql"
 	"encoding/base64"
+	"encoding/json"
 	"encoding/pem"
 	"fmt"
 	"io/ioutil"
@@ -56,6 +58,54 @@ func (n *Notifier) VAPIDKey() *webpush.Options {
 	return n.options
 }
 
+func GetPushSubscriptions(db sqlx.Queryer, contestantID string) ([]PushSubscription, error) {
+	var subscriptions []PushSubscription
+	err := sqlx.Select(
+		db,
+		&subscriptions,
+		"SELECT * FROM `push_subscriptions` WHERE `contestant_id` = ?",
+		contestantID,
+	)
+	if err != sql.ErrNoRows && err != nil {
+		return nil, fmt.Errorf("select push subscriptions: %w", err)
+	}
+	return subscriptions, nil
+}
+
+func SendWebPush(vapidKey *webpush.Options, notificationPB *resources.Notification, pushSubscription *PushSubscription) error {
+	b, err := proto.Marshal(notificationPB)
+	if err != nil {
+		return fmt.Errorf("marshal notification: %w", err)
+	}
+	message := make([]byte, base64.StdEncoding.EncodedLen(len(b)))
+	base64.StdEncoding.Encode(message, b)
+
+	resp, err := webpush.SendNotification(
+		message,
+		&webpush.Subscription{
+			Endpoint: pushSubscription.Endpoint,
+			Keys: webpush.Keys{
+				Auth:   pushSubscription.Auth,
+				P256dh: pushSubscription.P256DH,
+			},
+		},
+		vapidKey,
+	)
+	if err != nil {
+		return fmt.Errorf("send notification: %w", err)
+	}
+	defer resp.Body.Close()
+	expired := resp.StatusCode == 410
+	if expired {
+		return fmt.Errorf("expired notification")
+	}
+	invalid := resp.StatusCode == 404
+	if invalid {
+		return fmt.Errorf("invalid notification")
+	}
+	return nil
+}
+
 func (n *Notifier) NotifyClarificationAnswered(db sqlx.Ext, c *Clarification, updated bool) error {
 	var contestants []struct {
 		ID     string `db:"id"`
@@ -95,9 +145,33 @@ func (n *Notifier) NotifyClarificationAnswered(db sqlx.Ext, c *Clarification, up
 		if err != nil {
 			return fmt.Errorf("notify: %w", err)
 		}
-		if n.VAPIDKey() != nil {
+		if vapidKey := n.VAPIDKey(); vapidKey != nil {
 			notificationPB.Id = notification.ID
 			notificationPB.CreatedAt = timestamppb.New(notification.CreatedAt)
+
+			subscriptions, err := GetPushSubscriptions(db, contestant.ID)
+			if err != nil {
+				return fmt.Errorf("get push subscrptions: %w", err)
+			}
+
+			jsonBytes, err := json.Marshal(notificationPB)
+			if err != nil {
+				return fmt.Errorf("notification to json: %w", err)
+			}
+			fmt.Printf("Notification=%v\n", string(jsonBytes))
+
+			for _, subscription := range subscriptions {
+				jsonBytes, err := json.Marshal(subscription)
+				if err != nil {
+					return fmt.Errorf("subscription to json: %w", err)
+				}
+				fmt.Printf("Sending web push: push_subscription=%v\n", string(jsonBytes))
+				err = SendWebPush(vapidKey, notificationPB, &subscription)
+				if err != nil {
+					return fmt.Errorf("send webpush: %w", err)
+				}
+			}
+
 			// TODO: Web Push IIKANJI NI SHITE
 		}
 	}
@@ -130,9 +204,33 @@ func (n *Notifier) NotifyBenchmarkJobFinished(db sqlx.Ext, job *BenchmarkJob) er
 		if err != nil {
 			return fmt.Errorf("notify: %w", err)
 		}
-		if n.VAPIDKey() != nil {
+		if vapidKey := n.VAPIDKey(); vapidKey != nil {
 			notificationPB.Id = notification.ID
 			notificationPB.CreatedAt = timestamppb.New(notification.CreatedAt)
+
+			subscriptions, err := GetPushSubscriptions(db, contestant.ID)
+			if err != nil {
+				return fmt.Errorf("get push subscrptions: %w", err)
+			}
+
+			jsonBytes, err := json.Marshal(notificationPB)
+			if err != nil {
+				return fmt.Errorf("notification to json: %w", err)
+			}
+			fmt.Printf("Notification=%v\n", string(jsonBytes))
+
+			for _, subscription := range subscriptions {
+				jsonBytes, err := json.Marshal(subscription)
+				if err != nil {
+					return fmt.Errorf("subscription to json: %w", err)
+				}
+				fmt.Printf("Sending web push: push_subscription=%v\n", string(jsonBytes))
+				err = SendWebPush(vapidKey, notificationPB, &subscription)
+				if err != nil {
+					return fmt.Errorf("send webpush: %w", err)
+				}
+			}
+
 			// TODO: Web Push IIKANJI NI SHITE
 		}
 	}
