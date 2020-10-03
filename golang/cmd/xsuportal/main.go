@@ -275,10 +275,10 @@ func (*AdminService) GetClarification(e echo.Context) error {
 func (*AdminService) RespondClarification(e echo.Context) error {
 	contestant, err := getCurrentContestant(e, db, false)
 	if err != nil {
-		return wrapError("check session", fmt.Errorf("current contestant: %w", err))
+		return fmt.Errorf("current contestant: %w", err)
 	}
 	if contestant == nil {
-		return wrapError("check session", halt(e, http.StatusUnauthorized, "ログインが必要です", nil))
+		return halt(e, http.StatusUnauthorized, "ログインが必要です", nil)
 	}
 	id, err := strconv.Atoi(e.Param("id"))
 	if err != nil {
@@ -575,16 +575,17 @@ func (*ContestantService) ListNotifications(e echo.Context) error {
 		return wrapError("check session", err)
 	}
 
-	afterStr := e.QueryParam("after")
-
+	//afterStr := e.QueryParam("after")
+/*
 	tx, err := db.Beginx()
 	if err != nil {
 		return fmt.Errorf("begin tx: %w", err)
 	}
 	defer tx.Rollback()
-	contestant, _ := getCurrentContestant(e, tx, false)
-
+	//contestant, _ := getCurrentContestant(e, tx, false)
+*/
 	var notifications []*xsuportal.Notification
+	/*
 	if afterStr != "" {
 		after, err := strconv.Atoi(afterStr)
 		if err != nil {
@@ -630,13 +631,14 @@ func (*ContestantService) ListNotifications(e echo.Context) error {
 	if err != sql.ErrNoRows && err != nil {
 		return fmt.Errorf("get last answered clarification: %w", err)
 	}
+	*/
 	ns, err := makeNotificationsPB(notifications)
 	if err != nil {
 		return fmt.Errorf("make notifications: %w", err)
 	}
 	return writeProto(e, http.StatusOK, &contestantpb.ListNotificationsResponse{
 		Notifications:               ns,
-		LastAnsweredClarificationId: lastAnsweredClarificationID,
+		LastAnsweredClarificationId: 0,
 	})
 }
 
