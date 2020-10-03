@@ -368,7 +368,7 @@ func (*CommonService) GetCurrentSession(e echo.Context) error {
 		return fmt.Errorf("get current team: %w", err)
 	}
 	if currentTeam != nil {
-		res.Team, err = makeTeamPB(db, currentTeam, true, true)
+		res.Team, err = makeTeamPB(db, currentTeam, true, true, false)
 		if err != nil {
 			return fmt.Errorf("make team: %w", err)
 		}
@@ -852,7 +852,7 @@ func (*RegistrationService) GetRegistrationSession(e echo.Context) error {
 		return fmt.Errorf("undeterminable status")
 	}
 	if team != nil {
-		res.Team, err = makeTeamPB(db, team, contestant != nil && currentTeam != nil && contestant.ID == currentTeam.LeaderID.String, true)
+		res.Team, err = makeTeamPB(db, team, contestant != nil && currentTeam != nil && contestant.ID == currentTeam.LeaderID.String, true, false)
 		if err != nil {
 			return fmt.Errorf("make team: %w", err)
 		}
@@ -943,7 +943,7 @@ func (*RegistrationService) CreateTeam(e echo.Context) error {
 		ctx,
 		"UPDATE `teams` SET `leader_id` = ?, student = ? WHERE `id` = ? LIMIT 1",
 		contestant.ID,
-		contestant.Student,
+		req.IsStudent,
 		teamID,
 	)
 	if err != nil {
@@ -1012,7 +1012,7 @@ func (*RegistrationService) JoinTeam(e echo.Context) error {
 
 	_, err = tx.Exec(
 		"UPDATE `teams` SET student = ? WHERE `id` = ? LIMIT 1",
-		req.IsStudent,
+		req.IsStudent && team.Student.Bool,
 		req.TeamId,
 	)
 	if err != nil {
@@ -1169,7 +1169,7 @@ func (*AudienceService) ListTeams(e echo.Context) error {
 			TeamId:      team.ID,
 			Name:        team.Name,
 			MemberNames: memberNames,
-			IsStudent:   team.Student,
+			IsStudent:   team.Student.Bool,
 		})
 	}
 	return writeProto(e, http.StatusOK, res)
@@ -1344,7 +1344,7 @@ func halt(e echo.Context, code int, humanMessage string, err error) error {
 }
 
 func makeClarificationPB(db sqlx.Queryer, c *xsuportal.Clarification, t *xsuportal.Team) (*resourcespb.Clarification, error) {
-	team, err := makeTeamPB(db, t, false, true)
+	team, err := makeTeamPB(db, t, false, true, false)
 	if err != nil {
 		return nil, fmt.Errorf("make team: %w", err)
 	}
@@ -1364,7 +1364,7 @@ func makeClarificationPB(db sqlx.Queryer, c *xsuportal.Clarification, t *xsuport
 	return pb, nil
 }
 
-func makeTeamPB(db sqlx.Queryer, t *xsuportal.Team, detail bool, enableMembers bool) (*resourcespb.Team, error) {
+func makeTeamPB(db sqlx.Queryer, t *xsuportal.Team, detail bool, enableMembers bool, hasStudentInfo bool) (*resourcespb.Team, error) {
 	pb := &resourcespb.Team{
 		Id:        t.ID,
 		Name:      t.Name,
@@ -1392,6 +1392,11 @@ func makeTeamPB(db sqlx.Queryer, t *xsuportal.Team, detail bool, enableMembers b
 		for _, member := range members {
 			pb.Members = append(pb.Members, makeContestantPB(&member))
 			pb.MemberIds = append(pb.MemberIds, member.ID)
+		}
+	}
+	if hasStudentInfo {
+		pb.Student = &resourcespb.Team_StudentStatus{
+			Status: t.Student.Bool,
 		}
 	}
 	return pb, nil
@@ -1533,7 +1538,7 @@ func makeLeaderboardPB(e echo.Context, teamID int64) (*resourcespb.Leaderboard, 
 	}
 	pb := &resourcespb.Leaderboard{}
 	for _, team := range leaderboard {
-		t, _ := makeTeamPB(db, team.Team(), false, false)
+		t, _ := makeTeamPB(db, team.Team(), false, false, true)
 		item := &resourcespb.Leaderboard_LeaderboardItem{
 			Scores: teamGraphScores[team.ID],
 			BestScore: &resourcespb.Leaderboard_LeaderboardItem_LeaderboardScore{
