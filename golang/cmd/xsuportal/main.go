@@ -560,12 +560,10 @@ func (*ContestantService) Dashboard(e echo.Context) error {
 		return wrapError("check session", err)
 	}
 	team, _ := getCurrentTeam(e, db, false)
-	leaderboard, cacheTeamID, err := makeLeaderboardPB(e, team.ID)
+	leaderboard, err := makeLeaderboardPB(e, team.ID)
 	if err != nil {
 		return fmt.Errorf("make leaderboard: %w", err)
 	}
-
-    e.Response().Header().Set("Cache-Team-ID", strconv.FormatInt(cacheTeamID, 10))
 	return writeProto(e, http.StatusOK, &contestantpb.DashboardResponse{
 		Leaderboard: leaderboard,
 	})
@@ -1134,11 +1132,10 @@ func (*AudienceService) ListTeams(e echo.Context) error {
 }
 
 func (*AudienceService) Dashboard(e echo.Context) error {
-	leaderboard, cacheTeamID, err := makeLeaderboardPB(e, 0)
+	leaderboard, err := makeLeaderboardPB(e, 0)
 	if err != nil {
 		return fmt.Errorf("make leaderboard: %w", err)
 	}
-    e.Response().Header().Set("Cache-Team-ID", strconv.FormatInt(cacheTeamID, 10))
 	return writeProto(e, http.StatusOK, &audiencepb.DashboardResponse{
 		Leaderboard: leaderboard,
 	})
@@ -1385,17 +1382,17 @@ func makeContestPB(e echo.Context) (*resourcespb.Contest, error) {
 	}, nil
 }
 
-func makeLeaderboardPB(e echo.Context, teamID int64) (*resourcespb.Leaderboard, int64, error) {
+func makeLeaderboardPB(e echo.Context, teamID int64) (*resourcespb.Leaderboard, error) {
 	contestStatus, err := getCurrentContestStatus(e, db)
 	if err != nil {
-		return nil, -1, fmt.Errorf("get current contest status: %w", err)
+		return nil, fmt.Errorf("get current contest status: %w", err)
 	}
 	contestFinished := contestStatus.Status == resourcespb.Contest_FINISHED
 	contestFreezesAt := contestStatus.ContestFreezesAt
 
 	tx, err := db.Beginx()
 	if err != nil {
-		return nil, -1, fmt.Errorf("begin tx: %w", err)
+		return nil, fmt.Errorf("begin tx: %w", err)
 	}
 	defer tx.Rollback()
 	var leaderboard []xsuportal.LeaderBoardTeam
@@ -1470,7 +1467,7 @@ func makeLeaderboardPB(e echo.Context, teamID int64) (*resourcespb.Leaderboard, 
 		"  `latest_score_marked_at` ASC\n"
 	err = tx.Select(&leaderboard, query, teamID, teamID, contestFinished, contestFreezesAt, teamID, teamID, contestFinished, contestFreezesAt)
 	if err != sql.ErrNoRows && err != nil {
-		return nil, -1, fmt.Errorf("select leaderboard: %w", err)
+		return nil, fmt.Errorf("select leaderboard: %w", err)
 	}
 	jobResultsQuery := "SELECT\n" +
 		"  `team_id` AS `team_id`,\n" +
@@ -1491,10 +1488,10 @@ func makeLeaderboardPB(e echo.Context, teamID int64) (*resourcespb.Leaderboard, 
 	var jobResults []xsuportal.JobResult
 	err = tx.Select(&jobResults, jobResultsQuery, teamID, teamID, contestFinished, contestFreezesAt)
 	if err != sql.ErrNoRows && err != nil {
-		return nil, -1, fmt.Errorf("select job results: %w", err)
+		return nil, fmt.Errorf("select job results: %w", err)
 	}
 	if err := tx.Commit(); err != nil {
-		return nil, -1, fmt.Errorf("commit tx: %w", err)
+		return nil, fmt.Errorf("commit tx: %w", err)
 	}
 	teamGraphScores := make(map[int64][]*resourcespb.Leaderboard_LeaderboardItem_LeaderboardScore)
 	for _, jobResult := range jobResults {
@@ -1529,13 +1526,7 @@ func makeLeaderboardPB(e echo.Context, teamID int64) (*resourcespb.Leaderboard, 
 		}
 		pb.Teams = append(pb.Teams, item)
 	}
-
-    cacheTeamID := int64(0)
-    if contestStatus.Status == resourcespb.Contest_FINISHED {
-        cacheTeamID = teamID
-    }
-
-	return pb, cacheTeamID, nil
+	return pb, nil
 }
 
 func makeBenchmarkJobPB(job *xsuportal.BenchmarkJob) *resourcespb.BenchmarkJob {
