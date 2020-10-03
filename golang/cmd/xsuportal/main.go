@@ -941,7 +941,7 @@ func (*RegistrationService) CreateTeam(e echo.Context) error {
 		ctx,
 		"UPDATE `teams` SET `leader_id` = ?, student = ? WHERE `id` = ? LIMIT 1",
 		contestant.ID,
-		contestant.Student,
+		req.IsStudent,
 		teamID,
 	)
 	if err != nil {
