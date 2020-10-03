@@ -585,6 +585,7 @@ func (*ContestantService) ListNotifications(e echo.Context) error {
 	contestant, _ := getCurrentContestant(e, tx, false)
 
 	var notifications []*xsuportal.Notification
+	'''
 	if afterStr != "" {
 		after, err := strconv.Atoi(afterStr)
 		if err != nil {
@@ -630,6 +631,7 @@ func (*ContestantService) ListNotifications(e echo.Context) error {
 	if err != sql.ErrNoRows && err != nil {
 		return fmt.Errorf("get last answered clarification: %w", err)
 	}
+	'''
 	ns, err := makeNotificationsPB(notifications)
 	if err != nil {
 		return fmt.Errorf("make notifications: %w", err)
