@@ -150,6 +150,7 @@ CREATE TABLE `teams` (
   `email_address` varchar(255) NOT NULL,
   `invite_token` varchar(255) NOT NULL,
   `withdrawn` tinyint(1) DEFAULT '0',
+  `student` tinyint(1) DEFAULT '0',
   `created_at` datetime(6) NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `leader_id` (`leader_id`)

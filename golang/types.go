@@ -25,7 +25,7 @@ type Team struct {
 	InviteToken  string         `db:"invite_token"`
 	Withdrawn    bool           `db:"withdrawn"`
 	CreatedAt    time.Time      `db:"created_at"`
-	Student      sql.NullBool   `db:"-"`
+	Student      bool           `db:"student"`
 }
 
 type JobResult struct {
@@ -98,7 +98,7 @@ type LeaderBoardTeam struct {
 	Name                 string         `db:"name"`
 	LeaderID             sql.NullString `db:"leader_id"`
 	Withdrawn            bool           `db:"withdrawn"`
-	Student              sql.NullBool   `db:"student"`
+	Student              bool           `db:"student"`
 	BestScore            sql.NullInt64  `db:"best_score"`
 	BestScoreStartedAt   sql.NullTime   `db:"best_score_started_at"`
 	BestScoreMarkedAt    sql.NullTime   `db:"best_score_marked_at"`
