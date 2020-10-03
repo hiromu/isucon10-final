@@ -1393,7 +1393,7 @@ func makeTeamPB(db sqlx.Queryer, t *xsuportal.Team, detail bool, enableMembers b
 		}
 	}
 	if hasStudentInfo {
-		pb.Student = team.Student
+		pb.Student = t.Student
 	}
 	return pb, nil
 }
