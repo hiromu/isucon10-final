@@ -44,6 +44,56 @@ CREATE TABLE `benchmark_jobs` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Table structure for table `latest_scores`
+--
+
+DROP TABLE IF EXISTS `latest_scores`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `latest_scores` (
+  `team_id` bigint NOT NULL,
+  `score` int DEFAULT NOT NULL,
+  `started_at` datetime(6) DEFAULT NOT NULL,
+  `finished_at` datetime(6) DEFAULT NOT NULL,
+  `finish_count` int DEFAULT NOT NULL,
+  PRIMARY KEY (`team_id`),
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `latest_scores_frozen`
+--
+
+DROP TABLE IF EXISTS `latest_scores_frozen`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `latest_scores_frozen` (
+  `team_id` bigint NOT NULL,
+  `score` int DEFAULT NOT NULL,
+  `started_at` datetime(6) DEFAULT NOT NULL,
+  `finished_at` datetime(6) DEFAULT NOT NULL,
+  `finish_count` int DEFAULT NOT NULL,
+  PRIMARY KEY (`team_id`),
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `best_scores`
+--
+
+DROP TABLE IF EXISTS `best_scores`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `best_scores` (
+  `team_id` bigint NOT NULL,
+  `score` int DEFAULT NOT NULL,
+  `started_at` datetime(6) DEFAULT NOT NULL,
+  `finished_at` datetime(6) DEFAULT NOT NULL,
+  PRIMARY KEY (`team_id`),
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
 -- Table structure for table `clarifications`
 --
 

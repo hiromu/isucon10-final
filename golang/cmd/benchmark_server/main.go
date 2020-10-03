@@ -27,6 +27,7 @@ import (
 
 var db *sqlx.DB
 var contestStartsAt time.Time
+var contestFrozenAt time.Time
 
 type benchmarkQueueService struct {
 }
@@ -85,11 +86,14 @@ func (b *benchmarkQueueService) ReceiveBenchmarkJob(ctx context.Context, req *be
 				return false, fmt.Errorf("update benchmark job status: %w", err)
 			}
 
-			if contestStartsAt.IsZero() {
-				err = tx.Get(&contestStartsAt, "SELECT `contest_starts_at` FROM `contest_config` LIMIT 1")
+			if contestStartsAt.IsZero() || contestFrozenAt.IsZero() {
+				rows, err := tx.Queryx("SELECT `contest_starts_at` FROM `contest_config` LIMIT 1")
 				if err != nil {
 					return false, fmt.Errorf("get contest starts at: %w", err)
 				}
+                for rows.Next() {
+                    err = rows.Scan(&contestStartsAt, &contestFrozenAt)
+                }
 			}
 
 			if err := tx.Commit(); err != nil {
@@ -195,7 +199,7 @@ func (b *benchmarkReportService) ReportBenchmarkResult(srv bench.BenchmarkReport
 	}
 }
 
-func (b *benchmarkReportService) saveAsFinished(db sqlx.Execer, job *xsuportal.BenchmarkJob, req *bench.ReportBenchmarkResultRequest) error {
+func (b *benchmarkReportService) saveAsFinished(tx sqlx.Execer, job *xsuportal.BenchmarkJob, req *bench.ReportBenchmarkResultRequest) error {
 	if !job.StartedAt.Valid || job.FinishedAt.Valid {
 		return status.Errorf(codes.FailedPrecondition, "Job %v has already finished or has not started yet", req.JobId)
 	}
@@ -212,7 +216,7 @@ func (b *benchmarkReportService) saveAsFinished(db sqlx.Execer, job *xsuportal.B
 		deduction.Valid = true
 		deduction.Int32 = int32(result.ScoreBreakdown.Deduction)
 	}
-	_, err := db.Exec(
+	_, err := tx.Exec(
 		"UPDATE `benchmark_jobs` SET `status` = ?, `score_raw` = ?, `score_deduction` = ?, `passed` = ?, `reason` = ?, `updated_at` = NOW(6), `finished_at` = ? WHERE `id` = ? LIMIT 1",
 		resources.BenchmarkJob_FINISHED,
 		raw,
@@ -225,6 +229,66 @@ func (b *benchmarkReportService) saveAsFinished(db sqlx.Execer, job *xsuportal.B
 	if err != nil {
 		return fmt.Errorf("update benchmark job status: %w", err)
 	}
+
+    rows, err := db.Query(
+        "SELECT MAX(`score_raw` - `score_deduction`) AS `max_score`, SUM(1) AS `finish_count`, SUM(IF(`finished_at` < ?, 1, 0)) AS `finish_count_frozen` FROM `benchmark_jobs` WHERE `finished_at` IS NOT NULL AND `team_id` = ?",
+        job.TeamID, contestFrozenAt,
+    )
+	if err != nil {
+		return fmt.Errorf("update benchmark job status: %w", err)
+	}
+
+    currentScore := int64(result.ScoreBreakdown.Raw) - int64(result.ScoreBreakdown.Deduction)
+    var maxScore int64
+    var finishCount int64
+    var finishCountFrozen int64
+
+    for rows.Next() {
+        err = rows.Scan(&maxScore, &finishCount, &finishCountFrozen)
+    }
+
+	_, err = db.Exec(
+        "INSERT INTO `latest_scores` VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE `score` = ?, `started_at` = ?, `finished_at` = ?, `finish_count` = ?",
+        job.TeamID, currentScore, job.StartedAt, job.FinishedAt, finishCount,
+        currentScore, job.StartedAt, job.FinishedAt, finishCount,
+    )
+	if err != nil {
+		return fmt.Errorf("update benchmark job status: %w", err)
+	}
+
+    if contestFrozenAt.After(job.FinishedAt.Time) {
+	    _, err = db.Exec(
+            "INSERT INTO `latest_scores_frozen` VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE `score` = ?, `started_at` = ?, `finished_at` = ?, `finish_count` = ?",
+            job.TeamID, currentScore, job.StartedAt, job.FinishedAt, finishCount,
+            currentScore, job.StartedAt, job.FinishedAt, finishCount,
+        )
+    }
+	if err != nil {
+		return fmt.Errorf("update benchmark job status: %w", err)
+	}
+
+    if currentScore == maxScore {
+        _, err = db.Exec(
+            "INSERT INTO `best_scores` VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE `score` = ?, `started_at` = ?, `finished_at` = ?",
+            job.TeamID, maxScore, job.StartedAt, job.FinishedAt,
+            maxScore, job.StartedAt, job.FinishedAt,
+        )
+        if err != nil {
+            return fmt.Errorf("update benchmark job status: %w", err)
+        }
+
+        if contestFrozenAt.After(job.FinishedAt.Time) {
+            _, err = db.Exec(
+                "INSERT INTO `best_scores_frozen` VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE `score` = ?, `started_at` = ?, `finished_at` = ?",
+                job.TeamID, maxScore, job.StartedAt, job.FinishedAt,
+                maxScore, job.StartedAt, job.FinishedAt,
+            )
+        }
+        if err != nil {
+            return fmt.Errorf("update benchmark job status: %w", err)
+        }
+    }
+
 	return nil
 }
 
@@ -247,6 +311,7 @@ func (b *benchmarkReportService) saveAsRunning(db sqlx.Execer, job *xsuportal.Be
 	if err != nil {
 		return fmt.Errorf("update benchmark job status: %w", err)
 	}
+
 	return nil
 }
 
