@@ -17,6 +17,8 @@ fi
 
 cd /home/isucon/webapp/golang && make && cd -
 
+sudo mysql -u root -D xsuportal < /home/isucon/webapp/dump/schema_only.sql
+
 sudo systemctl restart envoy
 sudo systemctl restart mysql
 sudo systemctl restart xsuportal-web-golang
