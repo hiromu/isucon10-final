@@ -26,6 +26,7 @@ import (
 )
 
 var db *sqlx.DB
+var contestStartsAt time.Time
 
 type benchmarkQueueService struct {
 }
@@ -84,10 +85,11 @@ func (b *benchmarkQueueService) ReceiveBenchmarkJob(ctx context.Context, req *be
 				return false, fmt.Errorf("update benchmark job status: %w", err)
 			}
 
-			var contestStartsAt time.Time
-			err = tx.Get(&contestStartsAt, "SELECT `contest_starts_at` FROM `contest_config` LIMIT 1")
-			if err != nil {
-				return false, fmt.Errorf("get contest starts at: %w", err)
+			if contestStartsAt.IsZero() {
+				err = tx.Get(&contestStartsAt, "SELECT `contest_starts_at` FROM `contest_config` LIMIT 1")
+				if err != nil {
+					return false, fmt.Errorf("get contest starts at: %w", err)
+				}
 			}
 
 			if err := tx.Commit(); err != nil {
