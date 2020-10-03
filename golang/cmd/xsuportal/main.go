@@ -368,7 +368,6 @@ func (*CommonService) GetCurrentSession(e echo.Context) error {
 		return fmt.Errorf("get current team: %w", err)
 	}
 	if currentTeam != nil {
-		currentTeam.Student = false
 		res.Team, err = makeTeamPB(db, currentTeam, true, true)
 		if err != nil {
 			return fmt.Errorf("make team: %w", err)
@@ -1393,9 +1392,6 @@ func makeTeamPB(db sqlx.Queryer, t *xsuportal.Team, detail bool, enableMembers b
 			pb.MemberIds = append(pb.MemberIds, member.ID)
 		}
 	}
-	pb.Student = &resourcespb.Team_StudentStatus{
-		Status: t.Student,
-	}
 	return pb, nil
 }
 
@@ -1551,7 +1547,7 @@ func makeLeaderboardPB(e echo.Context, teamID int64) (*resourcespb.Leaderboard, 
 			Team:        t,
 			FinishCount: team.FinishCount.Int64,
 		}
-		if team.Student {
+		if team.Student.Valid && team.Student.Bool {
 			pb.StudentTeams = append(pb.StudentTeams, item)
 		} else {
 			pb.GeneralTeams = append(pb.GeneralTeams, item)

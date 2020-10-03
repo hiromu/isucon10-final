@@ -98,7 +98,7 @@ type LeaderBoardTeam struct {
 	Name                 string         `db:"name"`
 	LeaderID             sql.NullString `db:"leader_id"`
 	Withdrawn            bool           `db:"withdrawn"`
-	Student              bool           `db:"student"`
+	Student              sql.NullBool   `db:"student"`
 	BestScore            sql.NullInt64  `db:"best_score"`
 	BestScoreStartedAt   sql.NullTime   `db:"best_score_started_at"`
 	BestScoreMarkedAt    sql.NullTime   `db:"best_score_marked_at"`
@@ -114,6 +114,6 @@ func (t *LeaderBoardTeam) Team() *Team {
 		Name:      t.Name,
 		LeaderID:  t.LeaderID,
 		Withdrawn: t.Withdrawn,
-		Student:   t.Student,
+		Student:   t.Student.Bool,
 	}
 }
