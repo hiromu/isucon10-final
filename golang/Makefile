@@ -6,7 +6,7 @@ COMPILER=go
 GOFILES=$(wildcard ./*.go ./**/*.go)
 
 .PHONY: all
-all: clean build ## Cleanup and Build
+all: build ## Cleanup and Build
 
 .PHONY: build
 build: $(GOFILES) ## Build executable files

@@ -15,6 +15,8 @@ if [ -f /var/log/mysql/slow.log ]; then
     sudo mv /var/log/mysql/slow.log /var/log/mysql/mysqld-slow.log.$DATE
 fi
 
+cd /home/isucon/webapp/golang && make && cd -
+
 sudo systemctl restart envoy
 sudo systemctl restart mysql
 sudo systemctl restart xsuportal-web-golang
