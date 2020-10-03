@@ -1167,7 +1167,7 @@ func (*AudienceService) ListTeams(e echo.Context) error {
 			TeamId:      team.ID,
 			Name:        team.Name,
 			MemberNames: memberNames,
-			IsStudent:   team.Student,
+			IsStudent:   team.Student.Bool,
 		})
 	}
 	return writeProto(e, http.StatusOK, res)

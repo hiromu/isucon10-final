@@ -25,7 +25,7 @@ type Team struct {
 	InviteToken  string         `db:"invite_token"`
 	Withdrawn    bool           `db:"withdrawn"`
 	CreatedAt    time.Time      `db:"created_at"`
-	Student      bool           `db:"student"`
+	Student      sql.NullBool   `db:"student"`
 }
 
 type JobResult struct {
@@ -114,6 +114,6 @@ func (t *LeaderBoardTeam) Team() *Team {
 		Name:      t.Name,
 		LeaderID:  t.LeaderID,
 		Withdrawn: t.Withdrawn,
-		Student:   t.Student.Bool,
+		Student:   t.Student,
 	}
 }
