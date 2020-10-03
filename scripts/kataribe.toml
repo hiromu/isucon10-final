@@ -67,6 +67,10 @@ regexp = 'GET /api/admin/clarifications/[0-9]+'
 name = 'GET /api/admin/clarifications/XX'
 
 [[bundle]]
+regexp = 'GET /registration\?team_id=[0-9]+\&invite_token=.*'
+name = 'GET /registration?team_id=XX&invite_token=XX'
+
+[[bundle]]
 regexp = '^(GET|HEAD) /memo/[0-9]+\b'
 name = "get memo"
 

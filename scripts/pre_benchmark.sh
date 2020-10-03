@@ -2,24 +2,23 @@
 set -ex
 
 DATE=`date "+%Y%m%d_%H%M%S"`
-if [ -f /var/log/apache2/access_log ]; then
-    sudo mv /var/log/apache2/access_log /var/log/apache2/access_log.$DATE
-fi
+# if [ -f /var/log/apache2/access_log ]; then
+#     sudo mv /var/log/apache2/access_log /var/log/apache2/access_log.$DATE
+# fi
 if [ -f /var/log/nginx/access.log ]; then
     sudo mv /var/log/nginx/access.log /var/log/nginx/access.log.$DATE
 fi
-if [ -f /var/log/envoy/access.log ]; then
-    sudo mv /var/log/envoy/access.log /var/log/envoy/access.log.$DATE
-fi
+# if [ -f /var/log/envoy/access.log ]; then
+#     sudo mv /var/log/envoy/access.log /var/log/envoy/access.log.$DATE
+# fi
 if [ -f /var/log/mysql/slow.log ]; then
     sudo mv /var/log/mysql/slow.log /var/log/mysql/mysqld-slow.log.$DATE
 fi
 
 cd /home/isucon/webapp/golang && make && cd -
 
-sudo mysql -u root -D xsuportal < /home/isucon/webapp/dump/schema_only.sql
-
-sudo systemctl restart envoy
+# sudo systemctl restart envoy
+sudo systemctl restart nginx
 sudo systemctl restart mysql
 sudo systemctl restart xsuportal-web-golang
 sudo systemctl restart xsuportal-api-golang
