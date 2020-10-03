@@ -273,14 +273,17 @@ func (*AdminService) GetClarification(e echo.Context) error {
 }
 
 func (*AdminService) RespondClarification(e echo.Context) error {
-	if ok, err := loginRequired(e, db, &loginRequiredOption{}); !ok {
-		return wrapError("check session", err)
+	contestant, err := getCurrentContestant(e, db, false)
+	if err != nil {
+		return wrapError("check session", fmt.Errorf("current contestant: %w", err))
+	}
+	if contestant == nil {
+		return wrapError("check session", halt(e, http.StatusUnauthorized, "ログインが必要です", nil))
 	}
 	id, err := strconv.Atoi(e.Param("id"))
 	if err != nil {
 		return fmt.Errorf("parse id: %w", err)
 	}
-	contestant, _ := getCurrentContestant(e, db, false)
 	if !contestant.Staff {
 		return halt(e, http.StatusForbidden, "管理者権限が必要です", nil)
 	}
@@ -319,33 +322,29 @@ func (*AdminService) RespondClarification(e echo.Context) error {
 	if err != nil {
 		return fmt.Errorf("update clarification: %w", err)
 	}
-	var clarification xsuportal.Clarification
-	err = tx.Get(
-		&clarification,
-		"SELECT * FROM `clarifications` WHERE `id` = ? LIMIT 1",
-		id,
-	)
-	if err != nil {
-		return fmt.Errorf("get clarification: %w", err)
-	}
+	//var clarification xsuportal.Clarification
+	clarificationBefore.Answer.Valid = true
+	clarificationBefore.Answer.String = req.Answer
+	clarificationBefore.Disclosed.Valid = true
+	clarificationBefore.Disclosed.Bool = req.Disclose
 	var team xsuportal.Team
 	err = tx.Get(
 		&team,
 		"SELECT * FROM `teams` WHERE `id` = ? LIMIT 1",
-		clarification.TeamID,
+		clarificationBefore.TeamID,
 	)
 	if err != nil {
 		return fmt.Errorf("get team: %w", err)
 	}
-	c, err := makeClarificationPB(tx, &clarification, &team)
+	c, err := makeClarificationPB(tx, &clarificationBefore, &team)
 	if err != nil {
 		return fmt.Errorf("make clarification: %w", err)
 	}
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("commit tx: %w", err)
 	}
-	updated := wasAnswered && wasDisclosed == clarification.Disclosed
-	if err := notifier.NotifyClarificationAnswered(db, &clarification, updated); err != nil {
+	updated := wasAnswered && wasDisclosed == clarificationBefore.Disclosed
+	if err := notifier.NotifyClarificationAnswered(db, &clarificationBefore, updated); err != nil {
 		return fmt.Errorf("notify clarification answered: %w", err)
 	}
 	return writeProto(e, http.StatusOK, &adminpb.RespondClarificationResponse{
