@@ -12,3 +12,4 @@ ln -sf $DIR/systemd/xsuportal-web-nodejs.service /etc/systemd/system/xsuportal-w
 ln -sf $DIR/systemd/xsuportal-web-ruby.service /etc/systemd/system/xsuportal-web-ruby.service
 ln -sf $DIR/systemd/xsuportal-web-rust.service /etc/systemd/system/xsuportal-web-rust.service
 ln -sf $DIR/mysql/mysqld.cnf /etc/mysql/mysql.conf.d/mysqld.cnf
+ln -sf $DIR/env /home/isucon/env
