@@ -25,7 +25,7 @@ type Team struct {
 	InviteToken  string         `db:"invite_token"`
 	Withdrawn    bool           `db:"withdrawn"`
 	CreatedAt    time.Time      `db:"created_at"`
-	Student      sql.NullBool   `db:"-"`
+	Student      sql.NullBool   `db:"student"`
 }
 
 type JobResult struct {
