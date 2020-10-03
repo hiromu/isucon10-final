@@ -204,9 +204,33 @@ func (n *Notifier) NotifyBenchmarkJobFinished(db sqlx.Ext, job *BenchmarkJob) er
 		if err != nil {
 			return fmt.Errorf("notify: %w", err)
 		}
-		if n.VAPIDKey() != nil {
+		if vapidKey := n.VAPIDKey(); vapidKey != nil {
 			notificationPB.Id = notification.ID
 			notificationPB.CreatedAt = timestamppb.New(notification.CreatedAt)
+
+			subscriptions, err := GetPushSubscriptions(db, contestant.ID)
+			if err != nil {
+				return fmt.Errorf("get push subscrptions: %w", err)
+			}
+
+			jsonBytes, err := json.Marshal(notificationPB)
+			if err != nil {
+				return fmt.Errorf("notification to json: %w", err)
+			}
+			fmt.Printf("Notification=%v\n", string(jsonBytes))
+
+			for _, subscription := range subscriptions {
+				jsonBytes, err := json.Marshal(subscription)
+				if err != nil {
+					return fmt.Errorf("subscription to json: %w", err)
+				}
+				fmt.Printf("Sending web push: push_subscription=%v\n", string(jsonBytes))
+				err = SendWebPush(vapidKey, notificationPB, &subscription)
+				if err != nil {
+					return fmt.Errorf("send webpush: %w", err)
+				}
+			}
+
 			// TODO: Web Push IIKANJI NI SHITE
 		}
 	}
