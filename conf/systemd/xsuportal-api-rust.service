@@ -1,0 +1,13 @@
+[Unit]
+Description=xsuportal-api-rust
+After=network.target mysql.service
+
+[Service]
+User=isucon
+ExecStart=/home/isucon/.x /home/isucon/webapp/rust/target/release/benchmark_server
+WorkingDirectory=/home/isucon/webapp/rust
+EnvironmentFile=/home/isucon/env
+
+
+[Install]
+WantedBy=multi-user.target

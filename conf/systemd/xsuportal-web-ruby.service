@@ -1,0 +1,14 @@
+[Unit]
+Description=xsuportal-web-ruby
+After=network.target mysql.service
+
+[Service]
+User=isucon
+ExecStart=/home/isucon/.x bundle exec puma
+WorkingDirectory=/home/isucon/webapp/ruby
+EnvironmentFile=/home/isucon/env
+Environment=RACK_ENV=production
+
+
+[Install]
+WantedBy=multi-user.target
